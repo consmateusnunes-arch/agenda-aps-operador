@@ -1,8 +1,8 @@
 // Guarda a "casca" do app para abrir rápido e mostrar um aviso quando estiver sem internet.
 // O sistema em si (Apps Script) sempre vem da internet, nunca do cache.
-const VERSAO = 'agenda-aps-operador-v1';
+const VERSAO = 'agenda-aps-operador-v2';
 const CASCA = ['./', './index.html', './config.js', './manifest.webmanifest',
-               './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+               './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(CASCA)).then(() => self.skipWaiting()));

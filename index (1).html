@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>APS Operador - Central de Pré-Agendamentos</title>
+  <meta name="description" content="Painel dos Operadores da Central de Pré-Agendamentos da Atenção Primária à Saúde de Caldas Novas - GO.">
+  <meta name="theme-color" content="#1557b0">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="APS Operador">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <style>
+    :root { --verde: #1557b0; --verde-esc: #0d3a7a; --texto: #1d2b25; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--texto); }
+    #sistema { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+
+    /* Tela de abertura enquanto o sistema carrega */
+    #abertura { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+                background: linear-gradient(180deg, var(--verde), var(--verde-esc)); color: #fff; text-align: center; padding: 24px; transition: opacity .35s; }
+    #abertura.saindo { opacity: 0; pointer-events: none; }
+    #abertura img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    #abertura h1 { margin: 0; font-size: 1.35rem; }
+    #abertura p { margin: 0; opacity: .9; }
+    .giro { width: 34px; height: 34px; border: 4px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: gira 1s linear infinite; }
+    @keyframes gira { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } }
+
+    /* Aviso de instalação */
+    #instalar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 10; display: none;
+                background: #fff; border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.28); padding: 16px; max-width: 520px; margin: 0 auto; }
+    #instalar.aberto { display: block; }
+    #instalar .topo { display: flex; gap: 12px; align-items: center; }
+    #instalar .topo img { width: 52px; height: 52px; border-radius: 13px; flex-shrink: 0; }
+    #instalar h2 { font-size: 1.05rem; margin: 0 0 2px; }
+    #instalar .sub { font-size: .9rem; color: #4a5a53; margin: 0; }
+    #instalar ol { margin: 12px 0 0; padding-left: 22px; font-size: .98rem; line-height: 1.55; }
+    #instalar ol li { margin-bottom: 4px; }
+    .icone-ios { display: inline-block; vertical-align: -3px; width: 18px; height: 18px; }
+    #instalar .acoes { display: flex; gap: 10px; margin-top: 14px; }
+    #instalar button { flex: 1; border: 0; border-radius: 12px; padding: 13px 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    #btnInstalar { background: var(--verde); color: #fff; }
+    #btnDepois { background: #eef1f0; color: #2b3a34; }
+    #btnInstalar:focus-visible, #btnDepois:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
+
+    /* Sem internet / sem configuração */
+    #aviso { position: fixed; inset: 0; z-index: 8; display: none; align-items: center; justify-content: center; padding: 24px; background: #f6f8f7; text-align: center; }
+    #aviso.aberto { display: flex; }
+    #aviso .caixa { max-width: 420px; }
+    #aviso img { width: 80px; height: 80px; border-radius: 20px; }
+    #aviso h2 { margin: 14px 0 8px; font-size: 1.2rem; }
+    #aviso button { margin-top: 14px; border: 0; border-radius: 12px; padding: 12px 22px; background: var(--verde); color: #fff; font-weight: 700; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <div id="abertura" role="status" aria-live="polite">
+    <img src="icon-192.png" alt="">
+    <h1>APS Operador</h1>
+    <p>Suporte / Operador<br>Central de Pré-Agendamentos<br>Caldas Novas - GO</p>
+    <div class="giro" aria-hidden="true"></div>
+    <p id="aberturaTexto" style="font-size:.9rem">Carregando...</p>
+  </div>
+
+  <iframe id="sistema" title="APS Operador - Central de Pré-Agendamentos" allow="geolocation; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+  <div id="aviso" role="alert">
+    <div class="caixa">
+      <img src="icon-192.png" alt="">
+      <h2 id="avisoTitulo"></h2>
+      <p id="avisoTexto"></p>
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+    </div>
+  </div>
+
+  <div id="instalar" role="dialog" aria-labelledby="instalarTitulo" aria-describedby="instalarTexto">
+    <div class="topo">
+      <img src="icon-192.png" alt="">
+      <div>
+        <h2 id="instalarTitulo">Instale o app APS Operador</h2>
+        <p class="sub" id="instalarTexto">Abra o painel dos Operadores direto da tela do celular, como um aplicativo.</p>
+      </div>
+    </div>
+    <ol id="passosIos" hidden>
+      <li>Toque em <strong>Compartilhar</strong>
+        <svg class="icone-ios" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" aria-label="ícone de compartilhar"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+        na barra do Safari.</li>
+      <li>Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.</li>
+      <li>Toque em <strong>Adicionar</strong>. Pronto!</li>
+    </ol>
+    <ol id="passosPC" hidden>
+      <li>Na barra de endereço, clique no ícone de <strong>instalar</strong> (um monitor com seta ⤓), no canto direito.</li>
+      <li>Ou abra o menu <strong>⋮</strong> &gt; <strong>Transmitir, salvar e compartilhar</strong> &gt; <strong>Instalar página como app</strong>.</li>
+      <li>Confirme em <strong>Instalar</strong>. O app ganha um ícone na área de trabalho.</li>
+    </ol>
+    <ol id="passosAndroid" hidden>
+      <li>Abra este endereço no <strong>Chrome</strong> (se veio pelo WhatsApp, toque em ⋮ &gt; <strong>Abrir no Chrome</strong>).</li>
+      <li>Toque nos <strong>três pontinhos ⋮</strong> no canto do navegador.</li>
+      <li>Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</li>
+      <li>Confirme em <strong>Instalar</strong>. Pronto!</li>
+    </ol>
+    <div class="acoes">
+      <button type="button" id="btnDepois">Agora não</button>
+      <button type="button" id="btnInstalar" hidden>Instalar</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var ua = navigator.userAgent || '';
+    var ehIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var ehAndroid = /Android/i.test(ua);
+    var instalado = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    var pedidoInstalar = params.get('instalar') === '1';   // veio do botão "Instalar app" do site
+    var promptGuardado = null;
+
+    function guardar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    // --- Abre o sistema ---------------------------------------------------
+    var alvo = String(window.URL_SISTEMA || '');
+    var abertura = document.getElementById('abertura');
+    function tirarAbertura() { abertura.classList.add('saindo'); setTimeout(function () { abertura.style.display = 'none'; }, 400); }
+    function mostrarAviso(t, x) {
+      document.getElementById('avisoTitulo').textContent = t;
+      document.getElementById('avisoTexto').textContent = x;
+      document.getElementById('aviso').classList.add('aberto');
+      tirarAbertura();
+    }
+
+    if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(alvo)) {
+      mostrarAviso('App ainda não configurado', 'Falta colar o link do sistema (que termina em /exec) no arquivo config.js.');
+    } else if (!navigator.onLine) {
+      mostrarAviso('Sem internet', 'O sistema precisa de internet. Verifique o Wi-Fi ou os dados móveis e tente de novo.');
+    } else {
+      var frame = document.getElementById('sistema');
+      frame.addEventListener('load', function () { setTimeout(tirarAbertura, 300); });
+      // Se a internet estiver lenta, avisa mas continua tentando
+      setTimeout(function () { document.getElementById('aberturaTexto').textContent = 'A internet está lenta, aguarde mais um pouco...'; }, 8000);
+      setTimeout(function () {
+        tirarAbertura();
+        var lento = document.createElement('a');
+        lento.href = alvo; lento.target = '_blank'; lento.rel = 'noopener';
+        lento.textContent = 'Demorando? Abrir no navegador';
+        lento.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;background:#fff;color:#123;padding:10px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-weight:700;text-decoration:none';
+        frame.addEventListener('load', function () { lento.remove(); });
+        document.body.appendChild(lento);
+      }, 20000);
+      frame.src = alvo + (alvo.indexOf('?') === -1 ? '?' : '&') + 'origem=app';
+    }
+    window.addEventListener('offline', function () {
+      mostrarAviso('Sem internet', 'A conexão caiu. Quando a internet voltar, toque em "Tentar de novo".');
+    });
+
+    // --- Instalação --------------------------------------------------------
+    var caixa = document.getElementById('instalar');
+    var btnInstalar = document.getElementById('btnInstalar');
+
+    function podeMostrar() {
+      if (instalado) return false;
+      if (pedidoInstalar) return true;
+      var ate = +(ler('apsOperador_instalarDepois') || 0);
+      return Date.now() > ate;
+    }
+    function abrirCaixa(modo) {
+      document.getElementById('passosIos').hidden = modo !== 'ios';
+      document.getElementById('passosAndroid').hidden = modo !== 'android';
+      document.getElementById('passosPC').hidden = modo !== 'pc';
+      btnInstalar.hidden = modo !== 'prompt';
+      caixa.classList.add('aberto');
+      (modo === 'prompt' ? btnInstalar : document.getElementById('btnDepois')).focus({ preventScroll: true });
+    }
+    function fecharCaixa(adiar) {
+      caixa.classList.remove('aberto');
+      if (adiar) guardar('apsOperador_instalarDepois', String(Date.now() + 15 * 24 * 3600 * 1000));   // pergunta de novo em 15 dias
+    }
+    document.getElementById('btnDepois').addEventListener('click', function () { fecharCaixa(true); });
+
+    // Android / Chrome / Edge: botão de instalação de verdade
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      promptGuardado = e;
+      if (podeMostrar()) setTimeout(function () { abrirCaixa('prompt'); }, pedidoInstalar ? 600 : 4000);
+    });
+    btnInstalar.addEventListener('click', function () {
+      if (!promptGuardado) return;
+      promptGuardado.prompt();
+      promptGuardado.userChoice.then(function (r) {
+        promptGuardado = null;
+        fecharCaixa(r && r.outcome !== 'accepted');
+      });
+    });
+    window.addEventListener('appinstalled', function () { fecharCaixa(false); instalado = true; });
+
+    // iPhone: o Safari não tem botão automático, então mostramos o passo a passo
+    if (ehIOS && podeMostrar()) setTimeout(function () { abrirCaixa('ios'); }, pedidoInstalar ? 600 : 4000);
+    // Sem o botão automático do navegador (link aberto pelo WhatsApp, outro navegador,
+    // critérios do Chrome ainda não atingidos...): mostra o passo a passo pelo menu
+    if (!ehIOS && podeMostrar()) setTimeout(function () {
+      if (!promptGuardado && !instalado && !caixa.classList.contains('aberto')) abrirCaixa(ehAndroid ? 'android' : 'pc');
+    }, pedidoInstalar ? 2500 : 7000);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    }
+  })();
+  </script>
+</body>
+</html>
