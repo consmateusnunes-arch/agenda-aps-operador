@@ -92,7 +92,13 @@
       <li>Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.</li>
       <li>Toque em <strong>Adicionar</strong>. Pronto!</li>
     </ol>
+    <ol id="passosPC" hidden>
+      <li>Na barra de endereço, clique no ícone de <strong>instalar</strong> (um monitor com seta ⤓), no canto direito.</li>
+      <li>Ou abra o menu <strong>⋮</strong> &gt; <strong>Transmitir, salvar e compartilhar</strong> &gt; <strong>Instalar página como app</strong>.</li>
+      <li>Confirme em <strong>Instalar</strong>. O app ganha um ícone na área de trabalho.</li>
+    </ol>
     <ol id="passosAndroid" hidden>
+      <li>Abra este endereço no <strong>Chrome</strong> (se veio pelo WhatsApp, toque em ⋮ &gt; <strong>Abrir no Chrome</strong>).</li>
       <li>Toque nos <strong>três pontinhos ⋮</strong> no canto do navegador.</li>
       <li>Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</li>
       <li>Confirme em <strong>Instalar</strong>. Pronto!</li>
@@ -165,6 +171,7 @@
     function abrirCaixa(modo) {
       document.getElementById('passosIos').hidden = modo !== 'ios';
       document.getElementById('passosAndroid').hidden = modo !== 'android';
+      document.getElementById('passosPC').hidden = modo !== 'pc';
       btnInstalar.hidden = modo !== 'prompt';
       caixa.classList.add('aberto');
       (modo === 'prompt' ? btnInstalar : document.getElementById('btnDepois')).focus({ preventScroll: true });
@@ -193,8 +200,11 @@
 
     // iPhone: o Safari não tem botão automático, então mostramos o passo a passo
     if (ehIOS && podeMostrar()) setTimeout(function () { abrirCaixa('ios'); }, pedidoInstalar ? 600 : 4000);
-    // Android sem o botão automático (outros navegadores): passo a passo pelo menu
-    if (ehAndroid && pedidoInstalar && podeMostrar()) setTimeout(function () { if (!promptGuardado) abrirCaixa('android'); }, 2500);
+    // Sem o botão automático do navegador (link aberto pelo WhatsApp, outro navegador,
+    // critérios do Chrome ainda não atingidos...): mostra o passo a passo pelo menu
+    if (!ehIOS && podeMostrar()) setTimeout(function () {
+      if (!promptGuardado && !instalado && !caixa.classList.contains('aberto')) abrirCaixa(ehAndroid ? 'android' : 'pc');
+    }, pedidoInstalar ? 2500 : 7000);
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
